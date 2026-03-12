@@ -1,0 +1,55 @@
+#define BLYNK_TEMPLATE_ID "YourTemplateID"
+#define BLYNK_TEMPLATE_NAME "WaterLevel"
+#define BLYNK_AUTH_TOKEN "YourAuthToken"
+
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+
+char ssid[] = "YourWiFiName";
+char pass[] = "YourWiFiPassword";
+
+#define trigPin 5
+#define echoPin 18
+
+long duration;
+float distance;
+
+BlynkTimer timer;
+
+void sendWaterLevel()
+{
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration * 0.034 / 2;
+
+  int tankHeight = 100;   // cm (change according to your tank)
+  
+  int waterLevel = map(distance, tankHeight, 0, 0, 100);
+  waterLevel = constrain(waterLevel, 0, 100);
+
+  Blynk.virtualWrite(V0, waterLevel);
+}
+
+void setup()
+{
+  Serial.begin(115200);
+
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+
+  timer.setInterval(2000L, sendWaterLevel);
+}
+
+void loop()
+{
+  Blynk.run();
+  timer.run();
+}
